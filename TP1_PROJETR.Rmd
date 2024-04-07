@@ -1,0 +1,83 @@
+---
+title: "PROJETR"
+author: "HABA Fromo Francis"
+date: "2024-04-05"
+output: html_document
+---
+```{r}
+#IMPORTATION ET MISE EN FORME
+library(readxl)#Le package readxl permet d'importer la base de données qui a pour extension .xlsx
+Projet<-read_excel("Base_Projet.xlsx")
+View(Projet)
+#Nombre de lignes et colonnes de la base projet
+nrow(Projet)#Donne le nombre de lignes(c'est à dire le nombre de PME)
+ncol(Projet)#Donne le nombre de colonnes(c'est à dire le nombre de variable)
+#voyons s'il ya des Valeurs manquantes pour la variable key dans la base projet
+is.na(Projet$key)# IL n'ya pas de valeurs manquantes pour la variable key
+#Creation de variables
+#Renommage de la variable q1,q2 et q23
+library(magrittr)
+library(dplyr)
+projet1<-Projet%>%rename(region=q1,departement=q2,sexe=q23)
+View(projet1)
+#Creation de la variable sexe_2 qui vaut 1 si sexe égale à femme et 0 sinon
+projet1<-projet1%>%dplyr::mutate(sexe_2=recode(sexe,"Femme"="1","Homme"="0"))
+#Creation d'un data.frame nommé langues qui prend les variables key et les variables correspondantes décrites plus haut
+langues<-data.frame(key=projet1$key,dplyr::select(projet1,starts_with("q24")))
+langues<-langues%>%dplyr::mutate(Parle=rowSums(langues[,2:length(langues)]))
+langues<-langues%>%dplyr::select(key,Parle)
+data<-merge.data.frame(projet1,langues,by="key")
+#Analyse descriptive
+#Analyse descriptive univariée
+Stat_descrip<-data[c("sexe","q25","q12","q81")]
+statis_des<-Stat_descrip%>%rename("Niveau d'instruction"=q25,"Statut juridique"=q12,"Propriétaire/locataire"=q81)
+View(statis_des)
+#Analyse descriptive bivariée
+TCG1<-statis_des%>%gtsummary::tbl_cross(row = "Niveau d'instruction",col = sexe,percent = "row") #Permet d'extraire le corps principal du tableau récapitulatif
+TCG2<-statis_des%>%gtsummary::tbl_cross(row = "Statut juridique",col = sexe,percent = "row") #Permet d'extraire le corps principal du tableau récapitulatif
+TCG3<-statis_des%>%gtsummary::tbl_cross(row = "Propriétaire/locataire",col = sexe,percent = "row") #Permet d'extraire le corps principal du tableau récapitulatif
+#SYNTHESE DU TABLEAU DE CONTIGENCE
+gtsummary::tbl_stack(tbls = list(TCG1,TCG2,TCG3))
+#Un peu de cartographie
+#La transformation du data.frame en données géographiques
+projet_map<-projet1%>%rename(PME=q12)
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
